@@ -16,7 +16,7 @@ class PreDataset(Dataset):
             self.imgs = glob.glob(path+'/*.jpg')
         if files_list:
             with open(files_list, 'r') as f:
-                self.imgs = f.read().splotlines()
+                self.imgs = f.read().splitlines()
         self.transforms = transforms
         self.S = grid_size
         self.B = num_boxes
@@ -28,22 +28,22 @@ class PreDataset(Dataset):
     def __getitem__(self, index):
         img_file = self.imgs[index]
         img = cv2.imread(img_file)
-        img = cv2.resize(img, (448, 448))
-        boxes = self.load_annotations(img_file)
+        img = cv2.resize(img, (224, 224))
+        boxes = self.load_annotations(img.shape, img_file)
         transformed = self.transforms(image=img, bboxes=boxes)
         return transformed
     
-    def load_annotations(self, img_file):
-        annotations_file = img_file.replace('.jpg', 'txt')
+    def load_annotations(self, shape, img_file):
+        annotations_file = img_file.replace('.jpg', '.txt')
         boxes = np.zeros((0, 5))
         with open(annotations_file, 'r') as f:
             annotations = f.read().splitlines()
             for annot in annotations:
                 cid, cx, cy, w, h = map(float, annot.split(' '))
-                x1 = (cx - w/2) * 448
-                y1 = (cy - h/2) * 448
-                w = w * 448
-                h = h * 448
+                x1 = (cx - w/2) * shape[1]
+                y1 = (cy - h/2) * shape[2]
+                w = w * shape[1]
+                h = h * shape[2]
                 annotation = np.array([[x1, y1, w, h, cid]])
                 boxes = np.append(boxes, annotation, axis=0)
         return boxes
@@ -96,6 +96,6 @@ if __name__ == '__main__':
         batch_size=8, shuffle=True)
         
     for batch, sample in enumerate(loader):
-        imgs = sample['img']
-        annots = sample['annot']
+        imgs = sample['image']
+        annots = sample['bboxes']
     
