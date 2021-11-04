@@ -40,10 +40,10 @@ class PreDataset(Dataset):
             annotations = f.read().splitlines()
             for annot in annotations:
                 cid, cx, cy, w, h = map(float, annot.split(' '))
-                x1 = (cx - w/2) * shape[1]
-                y1 = (cy - h/2) * shape[2]
-                w = w * shape[1]
-                h = h * shape[2]
+                x1 = (cx - w/2) * shape[0]
+                y1 = (cy - h/2) * shape[1]
+                w = w * shape[0]
+                h = h * shape[1]
                 annotation = np.array([[x1, y1, w, h, cid]])
                 boxes = np.append(boxes, annotation, axis=0)
         return boxes
