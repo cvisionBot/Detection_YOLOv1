@@ -28,42 +28,25 @@ class PreDataset(Dataset):
     def __getitem__(self, index):
         img_file = self.imgs[index]
         img = cv2.imread(img_file)
-        boxes = self.load_annotations(img_file, img_shape)
+        img = cv2.resize(img, (448, 448))
+        boxes = self.load_annotations(img_file)
         transformed = self.transforms(image=img, bboxes=boxes)
-        x_input = transformed['image']
-        y_output = self.make_yolo_format(transformed['bboxes'], self.S, self.B, self.C)
-        return x_input, y_output
+        return transformed
     
-    def load_annotations(self, img_file, img_shape):
-        img_h, img_w, _ = img_shape
+    def load_annotations(self, img_file):
         annotations_file = img_file.replace('.jpg', 'txt')
         boxes = np.zeros((0, 5))
         with open(annotations_file, 'r') as f:
             annotations = f.read().splitlines()
             for annot in annotations:
                 cid, cx, cy, w, h = map(float, annot.split(' '))
-                x1 = (cx - w/2) * img_w
-                y1 = (cy - h/2) * img_h
-                w = w * img_w
-                h = h * img_h
+                x1 = (cx - w/2) * 448
+                y1 = (cy - h/2) * 448
+                w = w * 448
+                h = h * 448
                 annotation = np.array([[x1, y1, w, h, cid]])
                 boxes = np.append(boxes, annotation, axis=0)
         return boxes
-    
-    def make_yolo_format(self, boxes, S, B, C):
-        yolo_output = np.zeros((S, S, C + 5 * B))
-        '''
-            Box 하나를 가져와서 yolo output format으로 변경 [ 7 x 7 x 25]
-            [7 x 7 x 20] = class probability
-            [7 x 7 x 4] = boxes offset
-            [7 x 7 x 1] = class info
-
-        '''
-        for box in boxes:
-
-
-        yolo_output = torch.from_numpy(yolo_output)
-        return yolo_output
 
 class YoloFormat(pl.LightningDataModule):
     def __init__(self, train_list, val_list, workers, train_transforms, val_transforms, batch_size=None):
