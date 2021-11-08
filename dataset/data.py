@@ -29,8 +29,8 @@ class PreDataset(Dataset):
     def __getitem__(self, index):
         img_file = self.imgs[index]
         img = cv2.imread(img_file)
-        img = cv2.resize(img, (448, 448))
-        boxes = self.load_annotations(img_file)
+        img = cv2.resize(img, (224, 224))
+        boxes = self.load_annotations(img.shape, img_file)
         transformed = self.transforms(image=img, bboxes=boxes)
         return transformed
     
@@ -41,10 +41,10 @@ class PreDataset(Dataset):
             annotations = f.read().splitlines()
             for annot in annotations:
                 cid, cx, cy, w, h = map(float, annot.split(' '))
-                x1 = (cx - w/2) * 448
-                y1 = (cy - h/2) * 448
-                w = w * 448
-                h = h * 448
+                x1 = (cx - w/2) * shape[0]
+                y1 = (cy - h/2) * shape[1]
+                w = w * shape[0]
+                h = h * shape[1]
                 annotation = np.array([[x1, y1, w, h, cid]])
                 boxes = np.append(boxes, annotation, axis=0)
         return boxes
@@ -99,6 +99,6 @@ if __name__ == '__main__':
         batch_size=8, shuffle=True)
         
     for batch, sample in enumerate(loader):
-        imgs = sample['img']
-        annots = sample['annot']
+        imgs = sample['image']
+        annots = sample['bboxes']
     
