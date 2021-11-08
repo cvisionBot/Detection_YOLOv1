@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
+from dataset.utils import collater
 
 class PreDataset(Dataset):
     def __init__(self, transforms, path=None, files_list=None, grid_size=7, num_boxes=2, num_classes=20):
@@ -16,7 +17,7 @@ class PreDataset(Dataset):
             self.imgs = glob.glob(path+'/*.jpg')
         if files_list:
             with open(files_list, 'r') as f:
-                self.imgs = f.read().splotlines()
+                self.imgs = f.read().splitlines()
         self.transforms = transforms
         self.S = grid_size
         self.B = num_boxes
@@ -34,7 +35,7 @@ class PreDataset(Dataset):
         return transformed
     
     def load_annotations(self, img_file):
-        annotations_file = img_file.replace('.jpg', 'txt')
+        annotations_file = img_file.replace('.jpg', '.txt')
         boxes = np.zeros((0, 5))
         with open(annotations_file, 'r') as f:
             annotations = f.read().splitlines()
@@ -65,7 +66,8 @@ class YoloFormat(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.workers > 0,
-            pin_memory=self.workers>0  
+            pin_memory=self.workers>0,
+            collate_fn=collater  
         )
 
     def val_dataloader(self):
@@ -77,6 +79,7 @@ class YoloFormat(pl.LightningDataModule):
             num_workers=self.workers,
             persistent_workers=self.workers > 0,
             pin_memory=self.workers > 0,
+            collate_fn=collater
         )
 
 if __name__ == '__main__':
@@ -86,7 +89,7 @@ if __name__ == '__main__':
     train_transforms = albumentations.Compose([
         albumentations.HorizontalFlip(p=0.5),
         albumentations.ColorJitter(),
-        albumentations.RandomResizedCrop(320, 320, (0.8, 1)),
+        albumentations.RandomResizedCrop(448, 448, (0.8, 1)),
         albumentations.Normalize(0, 1),
         albumentations.pytorch.ToTensorV2(),
     ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))

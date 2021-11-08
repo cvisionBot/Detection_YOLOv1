@@ -9,7 +9,7 @@ class Conv2dBnRelu(nn.Module):
         self.conv2d = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation,
                                     groups=groups, bias=bias, padding_mode=padding_mode)
         self.bn = nn.BatchNorm2d(out_channels)
-        self.activation = nn.ReLU()
+        self.activation = nn.LeakyReLU()
 
     def forward(self, x):
         output = self.conv2d(x)
