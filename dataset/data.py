@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
+from dataset.utils import collater
 
 class PreDataset(Dataset):
     def __init__(self, transforms, path=None, files_list=None, grid_size=7, num_boxes=2, num_classes=20):
@@ -28,7 +29,7 @@ class PreDataset(Dataset):
     def __getitem__(self, index):
         img_file = self.imgs[index]
         img = cv2.imread(img_file)
-        img = cv2.resize(img, (224, 224))
+        img = cv2.resize(img, (448, 448))
         boxes = self.load_annotations(img.shape, img_file)
         transformed = self.transforms(image=img, bboxes=boxes)
         return transformed
@@ -65,7 +66,8 @@ class YoloFormat(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.workers > 0,
-            pin_memory=self.workers>0  
+            pin_memory=self.workers>0  ,
+            collate_fn=collater
         )
 
     def val_dataloader(self):
@@ -77,6 +79,7 @@ class YoloFormat(pl.LightningDataModule):
             num_workers=self.workers,
             persistent_workers=self.workers > 0,
             pin_memory=self.workers > 0,
+            collate_fn=collater
         )
 
 if __name__ == '__main__':
@@ -93,7 +96,7 @@ if __name__ == '__main__':
 
     loader = DataLoader(PreDataset(
         transforms=train_transforms, files_list='testfile_dir.txt'),
-        batch_size=8, shuffle=True)
+        batch_size=8, shuffle=True, collate_fn=collater)
         
     for batch, sample in enumerate(loader):
         imgs = sample['image']

@@ -12,9 +12,11 @@ class Yolov1_Head(nn.Module):
         self.C = num_classes
         self.flatten1 = nn.Linear(1024 * self.S * self.S, 4096)
         self.flatten2 = nn.Linear(4096, self.S * self.S * (self.B * 5  + self.C))
+        self.leaky_relu = nn.LeakyReLU(negative_slope=0.1)
 
     def forward(self, x):
         output = self.flatten1(x)
+        output = self.leaky_relu(output)
         output = self.flatten2(output)
         output = output.contiguous().view((self.B * 5 + self.C), 7, 7)
         return output
