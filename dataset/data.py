@@ -66,8 +66,8 @@ class YoloFormat(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.workers > 0,
-            pin_memory=self.workers>0  ,
-            collate_fn=collater
+            pin_memory=self.workers>0,
+            collate_fn=collater  
         )
 
     def val_dataloader(self):
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     train_transforms = albumentations.Compose([
         albumentations.HorizontalFlip(p=0.5),
         albumentations.ColorJitter(),
-        albumentations.RandomResizedCrop(320, 320, (0.8, 1)),
+        albumentations.RandomResizedCrop(448, 448, (0.8, 1)),
         albumentations.Normalize(0, 1),
         albumentations.pytorch.ToTensorV2(),
     ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))

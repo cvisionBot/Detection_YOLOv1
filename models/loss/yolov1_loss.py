@@ -4,7 +4,7 @@ from torch._C import DeviceObjType
 import torch.nn as nn
 import numpy as np
 
-
+from utils.calc_iou import calc_box_iou
 
 class Yolov1_Loss(nn.Module):
     def __init__(self, cfg=None):

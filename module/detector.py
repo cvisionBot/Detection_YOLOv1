@@ -5,12 +5,11 @@ import pytorch_lightning as pl
 from models.loss.yolov1_loss import Yolov1_Loss
 
 class YOLO_Detector(pl.LightningModule):
-    def __init__(self, model, cfg, epoch_length=None):
+    def __init__(self, model, cfg):
         super().__init__()
         self.save_hyperparameters(ignore='model')
         self.model = model
         self.loss_fn = Yolov1_Loss(cfg)
-        # mAP 장착
 
     def forward(self, x):
         pred_output = self.model(x)
