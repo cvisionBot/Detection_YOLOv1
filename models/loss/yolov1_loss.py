@@ -23,7 +23,6 @@ class Yolov1_Loss(nn.Module):
         # box : x, y, w, h
         # annot : x1, y1, w, h, cls  ( image, bboxes )
         predictions = self.final_act(pred)
-        # predictions[:,self.C:, :, :] = self.final_act(predictions[:, self.C:, :, :])
         imgs = samples['img']
         annots = samples['annot']
         losses = []
@@ -32,7 +31,6 @@ class Yolov1_Loss(nn.Module):
             gt_bboxes = gt_bboxes[gt_bboxes[:, 4] != -1]
             gt_bboxes = gt_bboxes[:, :4] / 448.
             losses.append(self.r_loss(predictions[b], imgs[b], annots[b]))
-        # print(losses)
     
     def r_loss(self, pred, img, annots):
         bboxes = annots
@@ -53,26 +51,20 @@ class Yolov1_Loss(nn.Module):
             gt_boxes = torch.zeros(7, 7, dtype=int)
             gt_boxes[gt_idx[:, :] > 0] = 1
             iou = self.calc_iou(reg_pred, img, bbox[:4]/448.)  # 2, 7, 7
-            _, best_idx = torch.max(iou, dim = 0)
-            print(best_idx)
             # iou, best_iou_box, best_idx, cls_target
-            best_iou_idx = gt_boxes * best_idx
-            print(best_iou_idx[best_iou_idx>0])
-            print(reg_pred[0, best_iou_idx>0])
-            xy_loss0            = self.coord * (self.mse_loss(bbox[0]/448., reg_pred[0,np.argmax(best_iou_idx)]) 
-                                                                    + self.mse_loss(bbox[1]/448., reg_pred[1,best_iou_idx]))
-            xy_loss1            = self.coord * gt_boxes * (1.-best_idx) * (self.mse_loss(bbox[0]/448., reg_pred[5,:,:]) 
-                                                                         + self.mse_loss(bbox[1]/448., reg_pred[6,:,:]))
-            wh_loss0            = self.coord * gt_boxes * best_idx * (self.mse_loss(torch.sqrt(bbox[2]/448.), torch.sqrt(reg_pred[2,:,:])) 
-                                                                    + self.mse_loss(torch.sqrt(bbox[3]/448.), torch.sqrt(reg_pred[3,:,:])))
-            wh_loss1            = self.coord * gt_boxes * (1.-best_idx) * (self.mse_loss(torch.sqrt(bbox[2]/448.), torch.sqrt(reg_pred[7,:,:])) 
-                                                                         + self.mse_loss(torch.sqrt(bbox[3]/448.), torch.sqrt(reg_pred[8,:,:])))
-            conf_loss0          = gt_boxes * iou[0,:,:] * best_idx * self.mse_loss(torch.ones_like(reg_pred[5,:,:]), reg_pred[5,:,:])
-            conf_loss1          = gt_boxes * iou[1,:,:] * (1.-best_idx) * self.mse_loss(torch.ones_like(reg_pred[9,:,:]), reg_pred[9,:,:])
-            no_obj_conf_loss0   = self.nobj_coord * (1.-gt_boxes) * iou[0,:,:] * best_idx * self.mse_loss(torch.zeros_like(reg_pred[5,:,:]), reg_pred[5,:,:])
-            no_obj_conf_loss1   = self.nobj_coord * (1.-gt_boxes) * iou[1,:,:] * (1.-best_idx) * self.mse_loss(torch.zeros_like(reg_pred[9,:,:]), reg_pred[9,:,:])
+            xy_loss0            = self.coord * (self.mse_loss(gt_idx * bbox[0]/448., gt_idx * reg_pred[0,:,:]) 
+                                              + self.mse_loss(gt_idx * bbox[1]/448., gt_idx * reg_pred[1,:,:]))
+            xy_loss1            = self.coord * (self.mse_loss(gt_idx * bbox[0]/448., gt_idx * reg_pred[5,:,:]) 
+                                              + self.mse_loss(gt_idx * bbox[1]/448., gt_idx * reg_pred[6,:,:]))
+            wh_loss0            = self.coord * (self.mse_loss(gt_idx * torch.sqrt(bbox[2]/448.), gt_idx * torch.sqrt(reg_pred[2,:,:])) 
+                                              + self.mse_loss(gt_idx * torch.sqrt(bbox[3]/448.), gt_idx * torch.sqrt(reg_pred[3,:,:])))
+            wh_loss1            = self.coord * (self.mse_loss(gt_idx * torch.sqrt(bbox[2]/448.), gt_idx * torch.sqrt(reg_pred[7,:,:])) 
+                                              + self.mse_loss(gt_idx * torch.sqrt(bbox[3]/448.), gt_idx * torch.sqrt(reg_pred[8,:,:])))
+            conf_loss0          = self.mse_loss(torch.ones_like(reg_pred[5,:,:]), gt_boxes * iou[0,:,:] * reg_pred[5,:,:])
+            conf_loss1          = self.mse_loss(torch.ones_like(reg_pred[9,:,:]), gt_boxes * iou[1,:,:] * reg_pred[9,:,:])
+            no_obj_conf_loss0   = self.nobj_coord * self.mse_loss(torch.zeros_like(reg_pred[5,:,:]), (1.-gt_boxes) * iou[0,:,:] * reg_pred[5,:,:])
+            no_obj_conf_loss1   = self.nobj_coord * self.mse_loss(torch.zeros_like(reg_pred[9,:,:]), (1.-gt_boxes) * iou[1,:,:] * reg_pred[9,:,:])
             cls_loss            = self.mse_loss(gt_boxes * cls_target ,gt_boxes * cls_pred[:20,:,:])
-            print(cls_loss)
             losses += torch.sum(torch.flatten(xy_loss0 + xy_loss1 + wh_loss0 + wh_loss1 + conf_loss0 + conf_loss1 + no_obj_conf_loss0 + no_obj_conf_loss1 + cls_loss))
         
         return losses
