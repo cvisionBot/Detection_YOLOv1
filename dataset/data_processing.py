@@ -1,15 +1,15 @@
-from types import LambdaType
 import xml.etree.ElementTree as elemTree
 import glob
 import tqdm
 import os
 
 class VOC:
-    def __init__(self, xml_path, names_file, dst_path):
+    def __init__(self, img_path, xml_path, names_file, dst_path):
         super().__init__()
         self.xml_path = xml_path
         self.labels = self.read_name(names_file)
         self.dst_path = dst_path
+        self.img_path = img_path
     
     
     def read_name(self, names_file):
@@ -38,7 +38,27 @@ class VOC:
         return labels
 
 
+    def save_train_val_set(self, save_train_set, save_val_set, ratio=0.5):
+        import random
+        if not os.path.exists(self.img_path):
+            print("no file : ", self.img_path)
+        imgs_file = glob.glob(os.path.join(self.img_path, '*.jpg'))
+        random.shuffle(imgs_file)
+        train_set = imgs_file[:int(len(imgs_file)*ratio)]
+        val_set = imgs_file[int(len(imgs_file)*ratio):]
+        if save_train_set:
+           with open(save_train_set, "w") as f:
+                f.writelines('\n'.join(train_set))
+                f.close()
+        
+        if save_val_set:
+           with open(save_val_set, "w") as f:
+                f.writelines('\n'.join(val_set))
+                f.close()
+
+
     def save_txt(self):
+        # cls, cx, cy, w, h (using normalized data)
         if not os.path.exists(self.xml_path):
             print("no file : ", self.xml_path)
             return os.error
@@ -55,20 +75,20 @@ class VOC:
                 box_info = object_info.find('bndbox')
                 obj_name = object_info.findtext('name')
                 c = self.labels.index(obj_name)
-                x1 = float(box_info.findtext('xmin')) / img_w
-                y1 = float(box_info.findtext('ymin')) / img_h
                 w = (float(box_info.findtext('xmax')) - float(box_info.findtext('xmin'))) / img_w
                 h = (float(box_info.findtext('ymax')) - float(box_info.findtext('ymin'))) / img_h
-                yolo_form_info.append('{} {} {} {} {}\n'.format(c, x1, y1, w, h))
+                cx = (float(box_info.findtext('xmin')) / img_w) + (w/2)
+                cy = (float(box_info.findtext('ymin')) / img_h) + (h/2)
+                yolo_form_info.append('{} {} {} {} {}'.format(c, cx, cy, w, h))
                 
             yolo_form_file = os.path.join(self.dst_path, img_name.replace('.jpg', '.txt'))
             with open(yolo_form_file, "w") as f:
-                for line in yolo_form_info:
-                    f.write(line)
+                f.writelines('\n'.join(yolo_form_info))
                 f.close()
 
 if __name__ == "__main__":
-    voc_pars = VOC(xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/annot_txt")
-    # voc_pars.save_txt()
+    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/annot_txt")
+    voc_pars.save_txt()
     label = voc_pars.make_label()
-    print(label)
+    voc_pars.save_train_val_set("../dataset/voc_train/train_list.txt", "../dataset/voc_train/val_list.txt", ratio=0.5) # train set ratio
+    
