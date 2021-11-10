@@ -14,7 +14,7 @@ class VOC:
     
     def read_name(self, names_file):
         if not os.path.exists(names_file):
-            print("no file : ", names_file)
+            print("no folder : ", names_file)
             return os.error
         labels = []
         with open(names_file, "r") as f:
@@ -25,7 +25,7 @@ class VOC:
     
     def make_label(self):
         if not os.path.exists(self.xml_path):
-            print("no file : ", self.xml_path)
+            print("no folder : ", self.xml_path)
             return os.error
         labels = []
         annots_xml_file = glob.glob(os.path.join(self.xml_path, '*.xml'))
@@ -41,7 +41,7 @@ class VOC:
     def save_train_val_set(self, save_train_set, save_val_set, ratio=0.5):
         import random
         if not os.path.exists(self.img_path):
-            print("no file : ", self.img_path)
+            print("no folder : ", self.img_path)
         imgs_file = glob.glob(os.path.join(self.img_path, '*.jpg'))
         random.shuffle(imgs_file)
         train_set = imgs_file[:int(len(imgs_file)*ratio)]
@@ -60,10 +60,11 @@ class VOC:
     def save_txt(self):
         # cls, cx, cy, w, h (using normalized data)
         if not os.path.exists(self.xml_path):
-            print("no file : ", self.xml_path)
+            print("no folder : ", self.xml_path)
             return os.error
         if not os.path.exists(self.dst_path):
-            print("no file : ", self.dst_path)
+            print("make dir : ", self.dst_path)
+            os.makedirs(self.dst_path)
         annots_xml_file = glob.glob(os.path.join(self.xml_path, '*.xml'))
         for annot_file in tqdm.tqdm(annots_xml_file):
             tree = elemTree.parse(annot_file)
@@ -87,7 +88,7 @@ class VOC:
                 f.close()
 
 if __name__ == "__main__":
-    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/annot_txt")
+    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/annot2_txt")
     voc_pars.save_txt()
     label = voc_pars.make_label()
     voc_pars.save_train_val_set("../dataset/voc_train/train_list.txt", "../dataset/voc_train/val_list.txt", ratio=0.5) # train set ratio
