@@ -31,7 +31,6 @@ class Yolov1_Loss(nn.Module):
             gt_boxes = annots[b]
             gt_boxes = gt_boxes[gt_boxes[:, 4] != -1]
             target_idx = self.get_target_idx(gt_boxes)
-            print('# # # # target idx : ', target_idx)
             pred_boxes_ = self.encode_box(prediction, target_idx)
 
             pred_boxes = []
@@ -43,30 +42,37 @@ class Yolov1_Loss(nn.Module):
             pred_boxes = torch.stack(pred_boxes)
             pred_cls = self.encode_cls(prediction, target_idx)
             pred = torch.cat((pred_boxes, pred_cls), axis=1)
-            print('# # # # pred : ', pred.shape)
 
             non_pred_ = self.nencode_box(prediction, target_idx, self.S)
-            print('# # # non_pred_box : ',non_pred_.shape)
             non_cls = self.nencode_cls(prediction, target_idx, self.S)
-            print('# # #  non_cls : ', non_cls.shape)
             npred = torch.cat((non_pred_, non_cls), axis=1)
-            print('# # # npred shape : ', npred.shape)
    
-
-            for gt_box, pred_box, npred_box in zip(gt_boxes, pred, npred):
-                xy_loss = self.obj_coord * (self.MSELoss(gt_box[0], pred_box[0]) 
-                                                + self.MSELoss(gt_box[1], pred_box[1]))
-             
-                wh_loss = self.obj_coord * (self.MSELoss(torch.sqrt(gt_box[2]), torch.sqrt(pred_box[2]))
-                                                + self.MSELoss(torch.sqrt(gt_box[3]), torch.sqrt(pred_box[3])))
-           
-                obj_loss = self.MSELoss(torch.tensor([[1.]]), pred_box[4])
+            for gt_box, pred_box in zip(gt_boxes, pred):
+                xy_loss = self.obj_coord * (self.MSELoss(gt_box[0]/448 , pred_box[0] ) 
+                                                + self.MSELoss(gt_box[1]/448 , pred_box[1]))
+                print('# # # xy_loss : ', xy_loss)
+                wh_loss = self.obj_coord * (self.MSELoss(torch.sqrt(gt_box[2]/448), torch.sqrt(pred_box[2]))
+                                                + self.MSELoss(torch.sqrt(gt_box[3]/448), torch.sqrt(pred_box[3])))
+                print('# # # wh_loss : ', wh_loss)
+                obj_loss = self.MSELoss(torch.ones_like(pred_box[4]), pred_box[4])
                 print('# # # obj_loss : ', obj_loss)
 
- 
-                nobj_loss = self.nobj_coord * self.MSELoss(torch.tensor[[0.]], npred_box[4])
+                nobj_loss = 0
+                for npred_box in npred:
+                    nobj_loss = self.nobj_coord * self.MSELoss(torch.zeros_like(npred_box[4]), npred_box[4])
+                    nobj_loss += nobj_loss
                 print('# # # noobj loss : ', nobj_loss)
+
                 class_loss = 0
+                for i in range(self.C):
+                    if i == gt_box[4]:
+                        tclass_loss = self.MSELoss(torch.ones_like(pred_box[5 + i]), pred_box[5 + i])
+                        class_loss += tclass_loss
+                    else:
+                        nclass_loss = self.MSELoss(torch.zeros_like(pred_box[5 + i]), pred_box[5 + i])
+                        class_loss += nclass_loss
+                print('# # # class loss : ', class_loss)
+
                 loss = (xy_loss + wh_loss + obj_loss + nobj_loss + class_loss)
                 print('# # # one batch loss : ', loss)
                 total_loss.append(loss)
@@ -94,6 +100,11 @@ class Yolov1_Loss(nn.Module):
 
     def nencode_box(self, prediction, target_idx, grid_size):
         npred_boxes = []
+        # mask = np.argmax(a)
+        # a[mask]
+        # pred[mask]
+        # pred[torch.logical_not(mask)]
+        # prediction[0:5, target_idx]
         for nobj_i in range(grid_size):
             for nobj_j in range(grid_size):
                 for _, p_idx in enumerate(target_idx):
@@ -110,10 +121,10 @@ class Yolov1_Loss(nn.Module):
         return npred_boxes
 
     def make_box(self, box):
-        x1 = box[0] * 448
-        y1 = box[1] * 448
-        width = box[2] * 448
-        height = box[3] * 448
+        x1 = box[0] 
+        y1 = box[1] 
+        width = box[2] 
+        height = box[3] 
         cls_id = box[4] 
         decode_box = torch.tensor([[x1, y1, width, height, cls_id]])
         return decode_box
