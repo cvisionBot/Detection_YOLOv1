@@ -4,11 +4,10 @@ import tqdm
 import os
 
 class VOC:
-    def __init__(self, img_path, xml_path, names_file, dst_path):
+    def __init__(self, img_path, xml_path, names_file):
         super().__init__()
         self.xml_path = xml_path
         self.labels = self.read_name(names_file)
-        self.dst_path = dst_path
         self.img_path = img_path
     
     
@@ -23,7 +22,7 @@ class VOC:
         return labels
     
     
-    def make_label(self):
+    def make_label(self, names_file):
         if not os.path.exists(self.xml_path):
             print("no folder : ", self.xml_path)
             return os.error
@@ -35,6 +34,9 @@ class VOC:
             for object_info in objects_info:
                 labels.append(object_info.findtext('name'))
         labels = sorted(list(set(labels)))
+        with open(names_file, "w") as f:
+            f.writelines('\n'.join(labels))
+            f.close()
         return labels
 
 
@@ -57,14 +59,14 @@ class VOC:
                 f.close()
 
 
-    def save_txt(self):
+    def save_txt(self, dst_path):
         # cls, cx, cy, w, h (using normalized data)
         if not os.path.exists(self.xml_path):
             print("no folder : ", self.xml_path)
             return os.error
-        if not os.path.exists(self.dst_path):
-            print("make dir : ", self.dst_path)
-            os.makedirs(self.dst_path)
+        if not os.path.exists(dst_path):
+            print("make dir : ", dst_path)
+            os.makedirs(dst_path)
         annots_xml_file = glob.glob(os.path.join(self.xml_path, '*.xml'))
         for annot_file in tqdm.tqdm(annots_xml_file):
             tree = elemTree.parse(annot_file)
@@ -82,14 +84,14 @@ class VOC:
                 cy = (float(box_info.findtext('ymin')) / img_h) + (h/2)
                 yolo_form_info.append('{} {} {} {} {}'.format(c, cx, cy, w, h))
                 
-            yolo_form_file = os.path.join(self.dst_path, img_name.replace('.jpg', '.txt'))
+            yolo_form_file = os.path.join(dst_path, img_name.replace('.jpg', '.txt'))
             with open(yolo_form_file, "w") as f:
                 f.writelines('\n'.join(yolo_form_info))
                 f.close()
 
 if __name__ == "__main__":
-    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/annot2_txt")
-    voc_pars.save_txt()
-    label = voc_pars.make_label()
-    voc_pars.save_train_val_set("../dataset/voc_train/train_list.txt", "../dataset/voc_train/val_list.txt", ratio=0.5) # train set ratio
-    
+    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt")
+    label = voc_pars.make_label(names_file="./dataset/names/pascal_voc.txt")
+    print(label)
+    # voc_pars.save_txt(dst_path="/mnt/voc_train/JPEGImages")
+    # voc_pars.save_train_val_set("/mnt/voc_train/train_list.txt", "/mnt/voc_train/val_list.txt", ratio=0.7) # train set ratio
