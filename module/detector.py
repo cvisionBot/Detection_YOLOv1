@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 
+from utils.module_select import get_optimizer
 from models.loss.yolov1_loss import Yolov1_Loss
 
 class YOLO_Detector(pl.LightningModule):
@@ -22,19 +23,23 @@ class YOLO_Detector(pl.LightningModule):
 
     def opt_training_step(self, batch):
         prediction = self.model(batch['img'])
-        loss = self.loss_fn([prediction, batch])
+        loss = self.loss_fn(prediction, batch)
         return loss
 
     def validation_step(self, batch, batch_idx):
         val_prediction = self.model(batch['img'])
-        val_loss = self.loss_fn([val_prediction, batch])
+        val_loss = self.loss_fn(val_prediction, batch)
         self.log('val_loss', val_loss, logger=True, on_epoch=True, sync_dist=True, prog_bar=True)
         return val_loss
 
-    def configure_optimizer(self):
-        cfg = self.hparam.cfg
-        epoch_length = self.hparams.epoch_length
-        
+    def configure_optimizers(self):
+        cfg = self.hparams.cfg
+        optim = get_optimizer(
+            cfg['optimizer'],
+            self.model.parameters(),
+            **cfg['optimizer_options']
+        )
+        return optim
 
 
     @staticmethod

@@ -31,6 +31,7 @@ class Yolov1_Loss(nn.Module):
             gt_bboxes = gt_bboxes[gt_bboxes[:, 4] != -1]
             gt_bboxes = gt_bboxes[:, :4] / 448.
             losses.append(self.r_loss(predictions[b], imgs[b], annots[b]))
+        return torch.stack(losses)
     
     def r_loss(self, pred, img, annots):
         bboxes = annots

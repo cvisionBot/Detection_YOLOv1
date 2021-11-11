@@ -95,10 +95,10 @@ if __name__ == '__main__':
     ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
 
     loader = DataLoader(PreDataset(
-        transforms=train_transforms, files_list='testfile_dir.txt'),
+        transforms=train_transforms, files_list='../dataset/voc_train/train_list.txt'),
         batch_size=8, shuffle=True, collate_fn=collater)
         
     for batch, sample in enumerate(loader):
-        imgs = sample['image']
-        annots = sample['bboxes']
+        imgs = sample['img']
+        annots = sample['annot']
     

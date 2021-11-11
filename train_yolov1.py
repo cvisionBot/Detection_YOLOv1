@@ -12,7 +12,7 @@ from dataset.utils import collater
 from models.backbone.yolov1 import YOLOv1
 from module.detector import YOLO_Detector
 
-from configs.yaml_helper import get_train_configs
+from utils.yaml_helper import get_train_configs
 
 import platform
 
