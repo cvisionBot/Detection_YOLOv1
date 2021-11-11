@@ -54,8 +54,7 @@ def train(cfg, ckpt=None):
 
     model = YOLOv1(in_channels=3)
 
-    model_module = YOLO_Detector(
-        model, cfg, epoch_length=data_module.train_dataloader().__len__())
+    model_module = YOLO_Detector(model, cfg)
 
     callbacks = [
         LearningRateMonitor(logging_interval='step'),
