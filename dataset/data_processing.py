@@ -90,8 +90,16 @@ class VOC:
                 f.close()
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt")
     label = voc_pars.make_label(names_file="./dataset/names/pascal_voc.txt")
     print(label)
     # voc_pars.save_txt(dst_path="/mnt/voc_train/JPEGImages")
     # voc_pars.save_train_val_set("/mnt/voc_train/train_list.txt", "/mnt/voc_train/val_list.txt", ratio=0.7) # train set ratio
+=======
+    voc_pars = VOC(img_path = "../dataset/voc_train/JPEGImages", xml_path="../dataset/voc_train/Annotations", names_file="./dataset/names/pascal_voc.txt", dst_path="../dataset/voc_train/JPEGImages")
+    voc_pars.save_txt()
+    label = voc_pars.make_label()
+    voc_pars.save_train_val_set("../dataset/voc_train/train_list.txt", "../dataset/voc_train/val_list.txt", ratio=0.5) # train set ratio
+    
+>>>>>>> 69b52c12216a0a20a31415444297d887594a75f0
