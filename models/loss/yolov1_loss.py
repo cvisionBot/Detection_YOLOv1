@@ -50,18 +50,18 @@ class Yolov1_Loss(nn.Module):
             for gt_box, pred_box in zip(gt_boxes, pred):
                 xy_loss = self.obj_coord * (self.MSELoss(gt_box[0]/448 , pred_box[0] ) 
                                                 + self.MSELoss(gt_box[1]/448 , pred_box[1]))
-                print('# # # xy_loss : ', xy_loss)
+                # print('# # # xy_loss : ', xy_loss)
                 wh_loss = self.obj_coord * (self.MSELoss(torch.sqrt(gt_box[2]/448), torch.sqrt(pred_box[2]))
                                                 + self.MSELoss(torch.sqrt(gt_box[3]/448), torch.sqrt(pred_box[3])))
-                print('# # # wh_loss : ', wh_loss)
+                # print('# # # wh_loss : ', wh_loss)
                 obj_loss = self.MSELoss(torch.ones_like(pred_box[4]), pred_box[4])
-                print('# # # obj_loss : ', obj_loss)
+                # print('# # # obj_loss : ', obj_loss)
 
                 nobj_loss = 0
                 for npred_box in npred:
                     nobj_loss = self.nobj_coord * self.MSELoss(torch.zeros_like(npred_box[4]), npred_box[4])
                     nobj_loss += nobj_loss
-                print('# # # noobj loss : ', nobj_loss)
+                # print('# # # noobj loss : ', nobj_loss)
 
                 class_loss = 0
                 for i in range(self.C):
@@ -71,10 +71,10 @@ class Yolov1_Loss(nn.Module):
                     else:
                         nclass_loss = self.MSELoss(torch.zeros_like(pred_box[5 + i]), pred_box[5 + i])
                         class_loss += nclass_loss
-                print('# # # class loss : ', class_loss)
+                # print('# # # class loss : ', class_loss)
 
                 loss = (xy_loss + wh_loss + obj_loss + nobj_loss + class_loss)
-                print('# # # one batch loss : ', loss)
+                # print('# # # one batch loss : ', loss)
                 total_loss.append(loss)
 
         total_loss = torch.stack(total_loss)
