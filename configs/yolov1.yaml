@@ -7,9 +7,9 @@ val_list: '../dataset/voc_train/val_list.txt'
 names: './dataset/names/pascal_voc.txt'
 input_size: 448
 
-workers: 1
+workers: 4
 epochs: 500
-batch_size: 10
+batch_size: 4
 
 save_freq: 1
 save_dir: './saved'
@@ -21,8 +21,8 @@ head: 'YOLOv1_Head'
 optimizer: 'adam'
 optimizer_options:
   lr: 1e-3
-  nesterov: true
-  momentum: 0.9
+#  nesterov: true
+#  momentum: 0.9
   weight_decay: 5e-4
 
 loss: 'YOLOv1_loss'
@@ -31,5 +31,5 @@ trainer_options:
   check_val_every_n_epoch: 5
   
 # YOLO Parameter
-gride_size: 7
+grid_size: 7
 num_boxes: 2
