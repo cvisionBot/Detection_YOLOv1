@@ -31,4 +31,4 @@ def collater(data):
     else: 
         padded_annots = torch.ones((batch_size, 1, 5)) * -1 
  
-    return {'img': imgs, 'annot': padded_annots}
+    return {'img': torch.stack(imgs), 'annot': padded_annots}

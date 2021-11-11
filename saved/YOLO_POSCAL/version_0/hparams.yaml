@@ -1,0 +1,26 @@
+cfg:
+  backbone: YOLOv1
+  batch_size: 4
+  classes: 20
+  dataset_name: POSCAL
+  epochs: 500
+  gpus: -1
+  grid_size: 7
+  head: YOLOv1_Head
+  in_channels: 3
+  input_size: 448
+  loss: YOLOv1_loss
+  model: YOLO
+  names: /dataset/names/pascal_voc.txt
+  num_boxes: 2
+  optimizer: adam
+  optimizer_options:
+    lr: 0.001
+    weight_decay: 0.0005
+  save_dir: ./saved
+  save_freq: 1
+  train_list: /mnt/voc_train/train_list.txt
+  trainer_options:
+    check_val_every_n_epoch: 5
+  val_list: /mnt/voc_train/val_list.txt
+  workers: 4

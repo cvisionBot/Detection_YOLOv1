@@ -6,27 +6,27 @@ import numpy as np
 from utils.calc_iou import calc_box_iou
 
 class Yolov1_Loss(nn.Module):
-    def __init__(self, cfg=None):
+    def __init__(self, cfg):
         super(Yolov1_Loss, self).__init__()
-        self.S = 7 #cfg['grid_size']
-        self.B = 2 #cfg['num_boxes']
-        self.C = 20 #cfg['num_classses']
+        self.S = cfg['grid_size']
+        self.B = cfg['num_boxes']
+        self.C = cfg['classes']
 
         self.obj_coord = 5.0
         self.nobj_coord = 0.5
         self.Sigmoid = nn.Sigmoid()
         self.MSELoss = nn.MSELoss()
 
-    def forward(self, pred, gt_input):
-        batch_size = pred.shape[0]
+    def forward(self, pred_out, gt_input):
+        batch_size = pred_out.shape[0]
         imgs = gt_input['img']
         annots = gt_input['annot']
-        # device = imgs.device
+        device = imgs.device
         total_loss = []
-
+ 
         for b in range(batch_size):
-            prediction = pred[b]
-            prediction = self.Sigmoid(prediction)
+            prediction = pred_out[b]
+            prediction = self.Sigmoid(prediction).to(device)
     
             gt_boxes = annots[b]
             gt_boxes = gt_boxes[gt_boxes[:, 4] != -1]
@@ -39,12 +39,12 @@ class Yolov1_Loss(nn.Module):
                 pred_box2_iou = calc_box_iou(pred_boxes_[1], gt_box)
                 info =pred_boxes_[0] if pred_box1_iou > pred_box2_iou else pred_boxes_[1]
                 pred_boxes.append(info)
-            pred_boxes = torch.stack(pred_boxes)
+            pred_boxes = torch.stack(pred_boxes).to(device)
             pred_cls = self.encode_cls(prediction, target_idx)
             pred = torch.cat((pred_boxes, pred_cls), axis=1)
 
-            non_pred_ = self.nencode_box(prediction, target_idx, self.S)
-            non_cls = self.nencode_cls(prediction, target_idx, self.S)
+            non_pred_ = self.nencode_box(prediction, target_idx, self.S).to(device)
+            non_cls = self.nencode_cls(prediction, target_idx, self.S).to(device)
             npred = torch.cat((non_pred_, non_cls), axis=1)
    
             for gt_box, pred_box in zip(gt_boxes, pred):
@@ -78,9 +78,8 @@ class Yolov1_Loss(nn.Module):
                 total_loss.append(loss)
 
         total_loss = torch.stack(total_loss)
-        print('total_loss before sum : ', total_loss)
         total_loss = total_loss.sum()
-        print('final loss : ', total_loss)
+        # print('final loss : ', total_loss)
         return total_loss
 
     def nencode_cls(self, prediction, target_idx, grid_size):
@@ -100,11 +99,6 @@ class Yolov1_Loss(nn.Module):
 
     def nencode_box(self, prediction, target_idx, grid_size):
         npred_boxes = []
-        # mask = np.argmax(a)
-        # a[mask]
-        # pred[mask]
-        # pred[torch.logical_not(mask)]
-        # prediction[0:5, target_idx]
         for nobj_i in range(grid_size):
             for nobj_j in range(grid_size):
                 for _, p_idx in enumerate(target_idx):
@@ -139,11 +133,12 @@ class Yolov1_Loss(nn.Module):
         return pred_boxes
 
     def encode_cls(self, prediction, target_idx):
+        pred_clses = []
         for i, p_idx in enumerate(target_idx):
-            num_box1_cls = torch.unsqueeze(prediction[10:30, p_idx[0], p_idx[1]], 0)
-            num_box2_cls = torch.unsqueeze(prediction[10:30, p_idx[0], p_idx[1]], 0)
-            pred_cls = torch.cat((num_box1_cls, num_box2_cls), axis=0)
-        return pred_cls
+            pred_cls = torch.unsqueeze(prediction[10:30, p_idx[0], p_idx[1]], 0)
+            pred_clses.append(pred_cls)
+        pred_clses = torch.cat(pred_clses, axis=0)
+        return pred_clses
 
     def get_target_idx(self, bboxes):
         bboxes = bboxes[:, :4] / 448.
