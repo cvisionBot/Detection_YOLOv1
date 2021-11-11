@@ -1,6 +1,5 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 
 from ..layers.conv_block import Conv2dBnRelu
 from ..initialize import weight_initialize
@@ -123,11 +122,11 @@ class _YOLOv1_Backbone(nn.Module):
         output = self.block5(output)
         return output
 
-def YOLOv1(in_channels):
+def YOLOv1_B(in_channels):
     model = _YOLOv1_Backbone(in_channels)
     weight_initialize(model)
     return model
 
 if __name__ == '__main__':
-    model = YOLOv1(in_channels=3)
-    # print(model(torch.rand(1, 3, 224, 224)))
+    model = YOLOv1_B(in_channels=3)
+    print(model(torch.rand(1, 3, 224, 224)))
