@@ -17,20 +17,22 @@ class Yolov1_Loss(nn.Module):
         self.Sigmoid = nn.Sigmoid()
         self.MSELoss = nn.MSELoss()
 
-    def forward(self, pred_out, gt_input):
-        batch_size = pred_out.shape[0]
+    def forward(self, model_output, gt_input):
+        batch_size = model_output.shape[0]
         imgs = gt_input['img']
         annots = gt_input['annot']
         device = imgs.device
         total_loss = []
  
         for b in range(batch_size):
-            prediction = pred_out[b]
+            prediction = model_output[b]
             prediction = self.Sigmoid(prediction).to(device)
     
             gt_boxes = annots[b]
             gt_boxes = gt_boxes[gt_boxes[:, 4] != -1]
             target_idx = self.get_target_idx(gt_boxes)
+            if target_idx.shape[0] == 0:
+                continue
             pred_boxes_ = self.encode_box(prediction, target_idx)
 
             pred_boxes = []
@@ -40,7 +42,7 @@ class Yolov1_Loss(nn.Module):
                 info =pred_boxes_[0] if pred_box1_iou > pred_box2_iou else pred_boxes_[1]
                 pred_boxes.append(info)
             pred_boxes = torch.stack(pred_boxes).to(device)
-            pred_cls = self.encode_cls(prediction, target_idx)
+            pred_cls = self.encode_cls(prediction, target_idx).to(device)
             pred = torch.cat((pred_boxes, pred_cls), axis=1)
 
             non_pred_ = self.nencode_box(prediction, target_idx, self.S).to(device)
@@ -120,7 +122,7 @@ class Yolov1_Loss(nn.Module):
         width = box[2] 
         height = box[3] 
         cls_id = box[4] 
-        decode_box = torch.tensor([[x1, y1, width, height, cls_id]])
+        decode_box = torch.Tensor([[x1, y1, width, height, cls_id]])
         return decode_box
 
     def encode_box(self, prediction, target_idx):
@@ -129,8 +131,8 @@ class Yolov1_Loss(nn.Module):
             num_box2 = prediction[5:10, p_idx[0], p_idx[1]]
             encode_box1 = self.make_box(num_box1)
             encode_box2 = self.make_box(num_box2)
-            pred_boxes = torch.cat((encode_box1, encode_box2), axis=0)
-        return pred_boxes
+            target_boxes = torch.cat((encode_box1, encode_box2), axis=0)
+        return target_boxes
 
     def encode_cls(self, prediction, target_idx):
         pred_clses = []

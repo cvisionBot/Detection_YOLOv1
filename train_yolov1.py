@@ -10,7 +10,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
 from dataset import data
 from utils.utility import make_model_name
-from utils.module_select import get_model, get_optimizer
+from utils.module_select import get_model
 from utils.yaml_helper import get_train_configs
 
 from models.head.yolov1_head import YOLOv1
@@ -20,19 +20,19 @@ def train(cfg, ckpt=None):
     input_size = cfg['input_size']
 
     # Test Overfit
-    # train_transforms = albumentations.Compose([
-    #     albumentations.Resize(input_size, input_size, always_apply=True),
-    #     albumentations.Normalize(0, 1),
-    #     albumentations.pytorch.ToTensorV2(),
-    # ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
-
     train_transforms = albumentations.Compose([
-        albumentations.HorizontalFlip(p=0.5),
-        albumentations.ColorJitter(),
-        albumentations.RandomResizedCrop(input_size, input_size, (0.8, 1)),
+        albumentations.Resize(input_size, input_size, always_apply=True),
         albumentations.Normalize(0, 1),
         albumentations.pytorch.ToTensorV2(),
     ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
+
+    # train_transforms = albumentations.Compose([
+    #     albumentations.HorizontalFlip(p=0.5),
+    #     albumentations.ColorJitter(),
+    #     albumentations.RandomResizedCrop(input_size, input_size, (0.8, 1)),
+    #     albumentations.Normalize(0, 1),
+    #     albumentations.pytorch.ToTensorV2(),
+    # ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
 
     valid_transform = albumentations.Compose([
         albumentations.Resize(input_size, input_size, always_apply=True),
