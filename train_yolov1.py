@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import albumentations
 import albumentations.pytorch
@@ -6,6 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.plugins import DDPPlugin
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint, StochasticWeightAveraging, QuantizationAwareTraining
+import torch
 
 from dataset.data import YoloFormat
 from dataset.utils import collater
@@ -63,12 +65,13 @@ def train(cfg, ckpt=None):
     ]
 
     callbacks = add_experimental_callbacks(cfg, callbacks)
-
+    avail_gpus = min(1, torch.cuda.device_count())
+    print(os.cpu_count())
     trainer = pl.Trainer(
         max_epochs=cfg['epochs'],
         logger=TensorBoardLogger(cfg['save_dir'],
                                  'yolov1_extract_coco'),
-        gpus=cfg['gpus'],
+        gpus=avail_gpus,
         accelerator='ddp' if platform.system() != 'Windows' else None,
         plugins=DDPPlugin() if platform.system() != 'Windows' else None,
         callbacks=callbacks,
@@ -79,7 +82,7 @@ def train(cfg, ckpt=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', default='configs/default_settings.yaml', required=False, type=str,
+    parser.add_argument('--cfg', default='configs/yolov1.yaml', required=False, type=str,
                         help='Train config file')
     parser.add_argument('--ckpt', required=False, type=str,
                         help='Train checkpoint')

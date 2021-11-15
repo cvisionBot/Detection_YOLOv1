@@ -16,8 +16,8 @@ def collater(data):
         'img': list of image tensor
         'annot': 동일 shape으로 정렬된 tensor [x1,y1,w,h] format
     """
-    imgs = [s['image'] for s in data]
-    bboxes = [torch.tensor(s['bboxes'])for s in data]
+    imgs = list(s['image'] for s in data)
+    bboxes = [torch.tensor(s['bboxes'], dtype=torch.float32)for s in data]
     batch_size = len(imgs)
 
     max_num_annots = max(annots.shape[0] for annots in bboxes)
@@ -30,6 +30,8 @@ def collater(data):
                 padded_annots[idx, :annot.shape[0], :] = annot
     else:
         padded_annots = torch.ones((batch_size, 1, 5)) * -1
-
-    return {'img': torch.stack(imgs), 'annot': padded_annots}
+    if batch_size > 1:
+        return {'img': torch.stack(imgs), 'annot': padded_annots}
+    else:
+        return {'img': imgs, 'annot': padded_annots}
 

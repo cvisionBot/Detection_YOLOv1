@@ -18,7 +18,8 @@ class Yolov1_Head(nn.Module):
         output = self.flatten1(x)
         output = self.leaky_relu(output)
         output = self.flatten2(output)
-        output = output.contiguous().view((self.B * 5 + self.C), 7, 7)
+        b, _, _, _ = output.shape
+        output = output.contiguous().view(b, (self.B * 5 + self.C), 7, 7)
         return output
 
 class YOLOv1(nn.Module):
@@ -29,21 +30,13 @@ class YOLOv1(nn.Module):
 
     def forward(self, input):
         output = self.backbone.stem(input)
-        print('Stem Block Output : ',output.shape)
         output = self.backbone.block1(output)
-        print('Block1 Output : ', output.shape)
         output = self.backbone.block2(output)
-        print('Block2 Output : ', output.shape)
         output = self.backbone.block3(output)
-        print('Block3 Output : ', output.shape)
         output = self.backbone.block4(output)
-        print('Block4 Output : ', output.shape)
         output = self.backbone.block5(output)
-        print('Block5 Output : ', output.shape)
         output = torch.flatten(output, 1)
-        print('Flatten Output : ', output.shape)
         output = self.head(output)
-        print('Head Output : ', output.shape)
 
         return output
 

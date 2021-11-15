@@ -7,6 +7,7 @@ val_list: '../dataset/voc_train/val_list.txt'
 names: './dataset/names/pascal_voc.txt'
 input_size: 448
 
+gpus: 1
 workers: 4
 epochs: 500
 batch_size: 4

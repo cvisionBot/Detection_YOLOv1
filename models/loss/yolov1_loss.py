@@ -1,6 +1,6 @@
 import math
 import torch
-from torch._C import DeviceObjType
+from torch._C import DeviceObjType, dtype
 import torch.nn as nn
 import numpy as np
 
@@ -31,7 +31,11 @@ class Yolov1_Loss(nn.Module):
             gt_bboxes = gt_bboxes[gt_bboxes[:, 4] != -1]
             gt_bboxes = gt_bboxes[:, :4] / 448.
             losses.append(self.r_loss(predictions[b], imgs[b], annots[b]))
-        return torch.stack(losses)
+        # print(torch.sum(torch.flatten(torch.stack(losses))))
+        if len(losses) < 2:
+            return torch.sum(torch.flatten(torch.Tensor(losses)))
+        else:
+            return torch.sum(torch.flatten(torch.stack(losses)))
     
     def r_loss(self, pred, img, annots):
         bboxes = annots
@@ -41,13 +45,13 @@ class Yolov1_Loss(nn.Module):
         # reg_pred = pred[self.C:, :, :]  # 10, 7, 7
         cls_pred = pred[10:, :, :]  # 20, 7, 7
         reg_pred = pred[:10, :, :]  # 10, 7, 7
-        losses = 0
+        losses = 0.
         for _, bbox in enumerate(bboxes):
-            cls_target = torch.zeros(self.C, 7, 7, dtype=float)
+            cls_target = torch.zeros(self.C, 7, 7, dtype=torch.float32)
             cls_target[int(bbox[-1]), : , :] = 1.
             positive_idx[0] = int((bbox[0]+(bbox[2]*0.5)) * self.S / 448.) # x idx
             positive_idx[1] = int((bbox[1]+(bbox[3]*0.5)) * self.S / 448.) # y idx
-            gt_idx = torch.zeros(7, 7, dtype=float)
+            gt_idx = torch.zeros(7, 7, dtype=torch.float32)
             gt_idx[int(positive_idx[0]), int(positive_idx[1])] = 1.
             gt_boxes = torch.zeros(7, 7, dtype=int)
             gt_boxes[gt_idx[:, :] > 0] = 1
@@ -66,7 +70,7 @@ class Yolov1_Loss(nn.Module):
             no_obj_conf_loss0   = self.nobj_coord * self.mse_loss(torch.zeros_like(reg_pred[5,:,:]), (1.-gt_boxes) * iou[0,:,:] * reg_pred[5,:,:])
             no_obj_conf_loss1   = self.nobj_coord * self.mse_loss(torch.zeros_like(reg_pred[9,:,:]), (1.-gt_boxes) * iou[1,:,:] * reg_pred[9,:,:])
             cls_loss            = self.mse_loss(gt_boxes * cls_target ,gt_boxes * cls_pred[:20,:,:])
-            losses += torch.sum(torch.flatten(xy_loss0 + xy_loss1 + wh_loss0 + wh_loss1 + conf_loss0 + conf_loss1 + no_obj_conf_loss0 + no_obj_conf_loss1 + cls_loss))
+            losses += torch.sum(torch.flatten(xy_loss0 + xy_loss1 + wh_loss0 + wh_loss1 + conf_loss0 + conf_loss1 + no_obj_conf_loss0 + no_obj_conf_loss1 + cls_loss), dtype=torch.float32)
         
         return losses
 

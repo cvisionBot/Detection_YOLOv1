@@ -1,15 +1,15 @@
 gpus: 0 # -1 : use all gpus
 save_dir : './saved' # dir for saving log, weights
-workers: 4 # number of workers to generate data
+workers: 1 # number of workers to generate data
 
 input_size: 448
 train_list: '../dataset/extract_coco_train_test.txt'
 val_list: '../dataset/extract_coco_train_test.txt'
 
-batch_size: 64
-epochs: 135
+batch_size: 1
+epochs: 20
 
-save_freq: 5
+save_freq: 1
 
 optimizer: 'sgd'
 optimizer_options:
@@ -19,7 +19,7 @@ optimizer_options:
   weight_decay: 1e-4
 
 trainer_options:
-  check_val_every_n_epoch: 10
+  check_val_every_n_epoch: 1
 
 experimental_options:
   os: 'windows'
