@@ -2,14 +2,14 @@ model: 'YOLO'
 dataset_name: 'POSCAL'
 classes: 20
 in_channels: 3
-train_list: '/mnt/voc_train/train_list.txt'
-val_list: '/mnt/voc_train/val_list.txt'
+train_list: '/mnt/PERSON_TEST/train_test.txt'
+val_list: '/mnt/PERSON_TEST/train_test.txt'
 names: '/dataset/names/pascal_voc.txt'
 input_size: 448
 
 workers: 4
 epochs: 500
-batch_size: 4
+batch_size: 8
 
 save_freq: 1
 save_dir: './saved'
@@ -18,11 +18,11 @@ save_dir: './saved'
 backbone: 'YOLOv1'
 head: 'YOLOv1_Head'
 
-optimizer: 'adam'
+optimizer: 'sgd'
 optimizer_options:
   lr: 1e-3
-#  nesterov: true
-#  momentum: 0.9
+  # nesterov: true
+  momentum: 0.9
   weight_decay: 5e-4
 
 loss: 'YOLOv1_loss'

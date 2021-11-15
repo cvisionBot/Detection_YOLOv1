@@ -1,6 +1,6 @@
 cfg:
   backbone: YOLOv1
-  batch_size: 4
+  batch_size: 8
   classes: 20
   dataset_name: POSCAL
   epochs: 500
@@ -19,8 +19,8 @@ cfg:
     weight_decay: 0.0005
   save_dir: ./saved
   save_freq: 1
-  train_list: /mnt/voc_train/train_list.txt
+  train_list: /mnt/PERSON_TEST/train_test.txt
   trainer_options:
     check_val_every_n_epoch: 5
-  val_list: /mnt/voc_train/val_list.txt
+  val_list: /mnt/PERSON_TEST/train_test.txt
   workers: 4
