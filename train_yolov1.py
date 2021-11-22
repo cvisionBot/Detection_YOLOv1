@@ -34,10 +34,16 @@ def add_experimental_callbacks(cfg, train_callbacks):
 
 def train(cfg, ckpt=None):
     input_size = cfg['input_size']
+    # train_transforms = albumentations.Compose([
+    #     albumentations.HorizontalFlip(p=0.5),
+    #     albumentations.ColorJitter(),
+    #     albumentations.RandomResizedCrop(input_size, input_size, (0.8, 1)),
+    #     albumentations.Normalize(0, 1),
+    #     albumentations.pytorch.ToTensorV2(),
+    # ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
+
     train_transforms = albumentations.Compose([
-        albumentations.HorizontalFlip(p=0.5),
-        albumentations.ColorJitter(),
-        albumentations.RandomResizedCrop(input_size, input_size, (0.8, 1)),
+        albumentations.Resize(input_size, input_size, always_apply=True),
         albumentations.Normalize(0, 1),
         albumentations.pytorch.ToTensorV2(),
     ], bbox_params=albumentations.BboxParams(format='coco', min_visibility=0.1))
@@ -82,7 +88,7 @@ def train(cfg, ckpt=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', default='configs/yolov1.yaml', required=False, type=str,
+    parser.add_argument('--cfg', default='configs/yolov1_test.yaml', required=False, type=str,
                         help='Train config file')
     parser.add_argument('--ckpt', required=False, type=str,
                         help='Train checkpoint')
